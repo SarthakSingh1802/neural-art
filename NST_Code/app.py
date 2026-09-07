@@ -15,6 +15,7 @@ from utils.models import VGGEncoder, Decoder
 from utils.utils import adaptive_instance_normalization, calc_mean_std
 
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'supersecretkey'
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
@@ -33,12 +34,19 @@ class UploadForm(FlaskForm):
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-encoder = VGGEncoder('vgg_normalised.pth').to(device)
+encoder = VGGEncoder(os.path.join(BASE_DIR, 'vgg_normalised.pth')).to(device)
 decoder = Decoder().to(device)
-decoder.load_state_dict(torch.load('/home/ubuntu/Desktop/NST_Code/experiment/final_exp/decoder_final.pth'))
+decoder.load_state_dict(torch.load(
+    os.path.join(BASE_DIR, 'experiment', 'final_exp', 'decoder_final.pth'),
+    map_location=device
+))
 
 encoder.eval()
 decoder.eval()
+
+@app.route('/health')
+def health():
+    return {'status': 'ok'}, 200
 
 def allowed_file(filename):
     return '.' in filename and \
